@@ -1,5 +1,7 @@
 package com.dcastelltort.robothobby.autonomousbot;
 
+import android.bluetooth.BluetoothAdapter;
+import android.content.Intent;
 import android.os.Bundle;
 import android.widget.TextView;
 import android.support.design.widget.FloatingActionButton;
@@ -9,6 +11,7 @@ import android.support.v7.widget.Toolbar;
 import android.view.View;
 import android.view.Menu;
 import android.view.MenuItem;
+import android.util.Log;
 
 public class MainActivity extends AppCompatActivity {
 
@@ -17,9 +20,35 @@ public class MainActivity extends AppCompatActivity {
         System.loadLibrary("native-lib");
     }
 
+    //Some constants
+    private static final String ROBOT_HW_ADDRESS = "20:16:11:17:84:68"; //Bad Hardcode
+    private static final String TAG = "MainActivity";
+    private static final int REQUEST_ENABLE_BT = 1;
+    private BluetoothManager bluetoothManager;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+
+        BluetoothAdapter mBTAdapter = BluetoothAdapter.getDefaultAdapter();
+        Boolean deviceHasAdapter = mBTAdapter != null;
+        if (!deviceHasAdapter) {
+            Log.d(TAG, "no bluetooth adapter");
+        }
+
+        if (deviceHasAdapter) {
+            if (!BluetoothAdapter.getDefaultAdapter().isEnabled()) {
+                Intent enableBtIntent = new Intent(BluetoothAdapter.ACTION_REQUEST_ENABLE);
+                startActivityForResult(enableBtIntent, REQUEST_ENABLE_BT);
+            }
+
+            //init bluetooth manager
+            bluetoothManager = new BluetoothManager(ROBOT_HW_ADDRESS);
+
+            //initialize, try to find the robot
+            Boolean bInitSuccess = bluetoothManager.Initialize();
+            Log.d(TAG, bInitSuccess ? "BluetootManager Init Success" : "BluetootManager Init Fail");
+        }
         setContentView(R.layout.activity_main);
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
@@ -58,6 +87,21 @@ public class MainActivity extends AppCompatActivity {
         }
 
         return super.onOptionsItemSelected(item);
+    }
+
+    @Override
+    protected void onActivityResult (int requestCode,
+                           int resultCode,
+                           Intent data) {
+
+        switch(requestCode) {
+            case REQUEST_ENABLE_BT:
+                Log.d(TAG, resultCode !=RESULT_OK? "BT Enabled":"BT Disabled");
+                break;
+            default:
+                break;
+        }
+        super.onActivityResult(requestCode, resultCode, data);
     }
 
     /**
