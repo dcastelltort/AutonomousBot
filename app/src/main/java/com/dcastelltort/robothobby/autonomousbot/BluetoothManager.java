@@ -2,8 +2,12 @@ package com.dcastelltort.robothobby.autonomousbot;
 
 import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothDevice;
+import android.bluetooth.BluetoothSocket;
 import android.util.Log;
+
+import java.io.IOException;
 import java.util.Set;
+import java.util.UUID;
 
 /**
  * Created by dcastelltort on 26/02/17.
@@ -12,6 +16,7 @@ import java.util.Set;
 public class BluetoothManager {
 
     private static final String TAG = "BluetoothManager";
+    private static final UUID robotUUID = UUID.fromString("00001101-0000-1000-8000-00805F9B34FB"); //default HC-06
 
     private BluetoothAdapter mBluetoothAdapter;
     private String mRobotBTHardwareAddress;
@@ -43,8 +48,51 @@ public class BluetoothManager {
         return null;
     }
 
+    BluetoothSocket connectDevice(BluetoothDevice device) {
+        // Use a temporary object that is later assigned to mmSocket
+        // because mmSocket is final.
+        BluetoothSocket tmp = null;
+        BluetoothSocket socket = null;
+
+        try {
+            // Get a BluetoothSocket to connect with the given BluetoothDevice.
+            // MY_UUID is the app's UUID string, also used in the server code.
+            tmp = device.createRfcommSocketToServiceRecord(robotUUID);
+            socket = tmp;
+        } catch (IOException e) {
+            Log.e(TAG, "Socket's create() method failed", e);
+        }
+
+        // Cancel discovery because it otherwise slows down the connection.
+        mBluetoothAdapter.cancelDiscovery();
+
+        if(socket == null) return null;
+
+        try {
+            // Connect to the remote device through the socket. This call blocks
+            // until it succeeds or throws an exception.
+            socket.connect();
+        } catch (IOException connectException) {
+            // Unable to connect; close the socket and return.
+            try {
+                socket.close();
+            } catch (IOException closeException) {
+                Log.e(TAG, "Could not close the client socket", closeException);
+
+            } finally {
+                socket = null;
+            }
+        }
+
+        return socket;
+    }
+
     Boolean Initialize() {
         BluetoothDevice robotBT = findRobotBTDevice();
-        return (robotBT != null);
+        Boolean initSuccess = false;
+        if (robotBT != null) {
+            initSuccess = (connectDevice(robotBT) != null);
+        }
+        return (initSuccess);
     }
 }
