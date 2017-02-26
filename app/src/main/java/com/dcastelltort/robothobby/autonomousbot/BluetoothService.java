@@ -13,15 +13,16 @@ import java.util.UUID;
  * Created by dcastelltort on 26/02/17.
  */
 
-public class BluetoothManager {
+public class BluetoothService {
 
-    private static final String TAG = "BluetoothManager";
+    private static final String TAG = "BluetoothService";
     private static final UUID robotUUID = UUID.fromString("00001101-0000-1000-8000-00805F9B34FB"); //default HC-06
 
     private BluetoothAdapter mBluetoothAdapter;
     private String mRobotBTHardwareAddress;
+    private BluetoothConnectedThread connectedThread;
 
-    BluetoothManager(String robotBTHardwareAddress) {
+    BluetoothService(String robotBTHardwareAddress) {
         mBluetoothAdapter = BluetoothAdapter.getDefaultAdapter();
         mRobotBTHardwareAddress = robotBTHardwareAddress;
     }
@@ -91,8 +92,22 @@ public class BluetoothManager {
         BluetoothDevice robotBT = findRobotBTDevice();
         Boolean initSuccess = false;
         if (robotBT != null) {
-            initSuccess = (connectDevice(robotBT) != null);
+            BluetoothSocket socket = connectDevice(robotBT);
+            if (socket != null) {
+                connectedThread = new BluetoothConnectedThread(socket);
+                connectedThread.start();
+                initSuccess = true;
+            }
         }
         return (initSuccess);
+    }
+
+
+    public void write(byte[] bytes) {
+        if (connectedThread != null) {
+            connectedThread.write(bytes);
+        } else {
+            Log.d(TAG, "write: but not connected");
+        }
     }
 }

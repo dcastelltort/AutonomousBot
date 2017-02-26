@@ -24,7 +24,7 @@ public class MainActivity extends AppCompatActivity {
     private static final String ROBOT_HW_ADDRESS = "20:16:11:17:84:68"; //Bad Hardcode
     private static final String TAG = "MainActivity";
     private static final int REQUEST_ENABLE_BT = 1;
-    private BluetoothManager bluetoothManager;
+    private BluetoothService bluetoothService;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -43,11 +43,14 @@ public class MainActivity extends AppCompatActivity {
             }
 
             //init bluetooth manager
-            bluetoothManager = new BluetoothManager(ROBOT_HW_ADDRESS);
+            bluetoothService = new BluetoothService(ROBOT_HW_ADDRESS);
 
             //initialize, try to find the robot
-            Boolean bInitSuccess = bluetoothManager.Initialize();
+            Boolean bInitSuccess = bluetoothService.Initialize();
             Log.d(TAG, bInitSuccess ? "BluetootManager Init Success" : "BluetootManager Init Fail");
+            byte[] msg = new byte[1];
+            msg[0] = (byte)'f';
+            bluetoothService.write(msg);
         }
         setContentView(R.layout.activity_main);
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
