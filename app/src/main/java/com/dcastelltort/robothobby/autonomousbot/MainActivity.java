@@ -47,7 +47,7 @@ public class MainActivity extends AppCompatActivity {
 
             //initialize, try to find the robot
             Boolean bInitSuccess = bluetoothService.Initialize();
-            Log.d(TAG, bInitSuccess ? "BluetootManager Init Success" : "BluetootManager Init Fail");
+            Log.d(TAG, bInitSuccess ? "BluetoothManager Init Success" : "BluetoothManager Init Fail");
             byte[] msg = new byte[1];
             msg[0] = (byte)'f';
             bluetoothService.write(msg);
