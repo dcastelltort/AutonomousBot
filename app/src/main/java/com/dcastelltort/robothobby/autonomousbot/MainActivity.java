@@ -13,6 +13,9 @@ import android.view.Menu;
 import android.view.MenuItem;
 import android.util.Log;
 
+import java.util.Timer;
+import java.util.TimerTask;
+
 public class MainActivity extends AppCompatActivity {
 
     // Used to load the 'native-lib' library on application startup.
@@ -24,7 +27,11 @@ public class MainActivity extends AppCompatActivity {
     private static final String ROBOT_HW_ADDRESS = "20:16:11:17:84:68"; //Bad Hardcode
     private static final String TAG = "MainActivity";
     private static final int REQUEST_ENABLE_BT = 1;
+    private static final int FRAMERATE = 30;
+
+    // members
     private BluetoothService bluetoothService;
+    private Timer loopTimer = new Timer();
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -65,9 +72,17 @@ public class MainActivity extends AppCompatActivity {
             }
         });
 
-        // Example of a call to a native method
-        TextView tv = (TextView) findViewById(R.id.sample_text);
-        tv.setText(stringFromJNI());
+
+        // initiate timer to call c++ at given frame for processing
+        loopTimer.scheduleAtFixedRate(new TimerTask(){
+            @Override
+            public void run() {
+                String outputCommands = coreProcess();
+                if (outputCommands.isEmpty() == false) {
+                    Log.d("TAG", outputCommands);
+                }
+            }
+        } , 0 , 1000 / FRAMERATE);
     }
 
     @Override
@@ -111,5 +126,5 @@ public class MainActivity extends AppCompatActivity {
      * A native method that is implemented by the 'native-lib' native library,
      * which is packaged with this application.
      */
-    public native String stringFromJNI();
+    public native String coreProcess();
 }
